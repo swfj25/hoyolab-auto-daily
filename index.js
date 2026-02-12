@@ -40,10 +40,10 @@ async function run(cookie, games) {
     const url = new URL(endpoint)
     const actId = url.searchParams.get('act_id')
 
-    url.searchParams.set('lang', 'en-us')
+    url.searchParams.set('lang', 'ja-jp')
 
     const body = JSON.stringify({
-      lang: 'en-us',
+      lang: 'ja-jp',
       act_id: actId
     })
 
@@ -52,7 +52,7 @@ async function run(cookie, games) {
 
     headers.set('accept', 'application/json, text/plain, */*')
     headers.set('accept-encoding', 'gzip, deflate, br, zstd')
-    headers.set('accept-language', 'en-US,en;q=0.6')
+    headers.set('accept-language', 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7')
     headers.set('connection', 'keep-alive')
 
     headers.set('origin', 'https://act.hoyolab.com')
