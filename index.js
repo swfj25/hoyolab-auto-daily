@@ -247,7 +247,11 @@ async function runEndfield(cookie, game) {
 
 
 async function getOAuthCode(token) {
-  const payload = { token: token, appCode: APP_CODE, type: 0 };
+  // Developer Tools may copy the token in URL-encoded format, so we decode it to base64
+  let decodedToken = token;
+  try { decodedToken = decodeURIComponent(token); } catch (e) {}
+  
+  const payload = { token: decodedToken, appCode: APP_CODE, type: 0 };
   const response = await fetch("https://as.gryphline.com/user/oauth2/v2/grant", {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'user-agent': endfieldUserAgent },
