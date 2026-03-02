@@ -29,7 +29,7 @@ You have to check in manually first to get your cookie, follow these steps (clic
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/81a57cfa-9f2e-48d7-bec6-5ef4edc3b857" />
    </details>
 
-4. <details>
+3. <details>
    <summary>For Chromium users, click on the Application tab. If not found, click on the arrow.</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/ea4bb233-367c-4c41-8c66-30c2bc2f3150" />
    </details>
@@ -38,17 +38,17 @@ You have to check in manually first to get your cookie, follow these steps (clic
    <img src="https://github.com/user-attachments/assets/4e12c315-9a01-4ad8-9e5f-6197328e900f" />
    </details>
 
-5. <details>
+4. <details>
    <summary>On the filter box, type <code>v2</code>. You might want to expand the dev tools to see clearly.</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/bf1eec5f-bb1e-4af2-b37b-3c3c252328db" />
    </details>
 
-6. <details>
+5. <details>
    <summary>Find <code>ltoken_v2</code> and <code>ltuid_v2</code>, click on them, and copy the value below.</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/3ce70d90-6d5d-4353-ab35-8476c44124a1" />
    </details>
 
-7. <details open>
+6. <details open>
    <summary>Write <code>ltuid_v2=PASTE_ltuid_v2; ltoken_v2=PASTE_ltoken_v2</code> like the screenshot.</summary>
 
    I write the line on the browser url to make it easier. Pay attention, use semicolon (;) and not colon (:)
@@ -58,7 +58,16 @@ You have to check in manually first to get your cookie, follow these steps (clic
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/4309fcd9-3d6b-43f3-96f2-d8276bea6280" />
    </details>
 
-9. Copy that. That's your cookie, keep it save and do NOT share it with anyone!
+7. Copy that. That's your cookie, keep it safe and do NOT share it with anyone!
+
+### Getting your cookie specifically for Endfield (SKPORT)
+
+If you are setting up auto check-in for Endfield, the cookie you need is your `ACCOUNT_TOKEN` from SKPORT:
+
+1. Open the [Endfield Sign-in Page](https://game.skport.com/endfield/sign-in) and log in.
+2. Open dev tools (<kbd>F12</kbd> or Inspect), and reload the page.
+3. Go to the Application tab -> Cookies -> `https://game.skport.com` (or `.skport.com`).
+4. Find `ACCOUNT_TOKEN` in the list and copy its Value. This value is your `COOKIE` for the `endfield` game entry. Keep it safe and do NOT share it.
 
 ## Usage
 
@@ -90,7 +99,7 @@ You have to check in manually first to get your cookie, follow these steps (clic
 7. <details>
    <summary>
       Insert name with <code>GAMES</code> and value with the game codes you want to check in, separated by space like the example screenshot.<br/>
-      Supported values are: <code>zzz</code>, <code>gi</code>, <code>hsr</code>, <code>hi3</code>, <code>tot</code>
+      Supported values are: <code>zzz</code>, <code>gi</code>, <code>hsr</code>, <code>hi3</code>, <code>tot</code>, <code>endfield</code>
    </summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/01cd1a4b-16ae-4f3c-ba3e-cd3f913e44fa" />
    </details>
@@ -104,9 +113,9 @@ You have to check in manually first to get your cookie, follow these steps (clic
    </details>
 
 9. <details>
-    <summary>Refresh the page, wait for 15-25 secs, and see if it ran successfully. You should now see the check in status on top of README.</summary>
-    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/5c8520ee-a8b7-4c66-bb1b-ef945c499112" />
-    </details>
+   <summary>Refresh the page, wait for 15-25 secs, and see if it ran successfully. You should now see the check in status on top of README.</summary>
+   <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/5c8520ee-a8b7-4c66-bb1b-ef945c499112" />
+   </details>
 
 10. You're set! Hop on your game the next day and see if you got the rewards
 
