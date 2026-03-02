@@ -203,21 +203,24 @@ if (hasErrors) {
 }
 
 async function runEndfield(cookie, game) {
-  const oauthCode = await getOAuthCode(cookie);
+  const oauthJson = await getOAuthCode(cookie);
+  const oauthCode = (oauthJson.status === 0 && oauthJson.data && oauthJson.data.code) ? oauthJson.data.code : null;
   if (!oauthCode) {
-    log('error', game, "Failed to get OAuth Code (Check ACCOUNT_TOKEN)");
+    log('error', game, "Failed to get OAuth Code (Check ACCOUNT_TOKEN). Response: " + JSON.stringify(oauthJson));
     return;
   }
 
-  const cred = await getCred(oauthCode);
+  const credJson = await getCred(oauthCode);
+  const cred = (credJson.code === 0 && credJson.data && credJson.data.cred) ? credJson.data.cred : null;
   if (!cred) {
-    log('error', game, "Failed to get Credential");
+    log('error', game, "Failed to get Credential. Response: " + JSON.stringify(credJson));
     return;
   }
 
-  const signToken = await getSignToken(cred);
+  const signJson = await getSignToken(cred);
+  const signToken = (signJson.code === 0 && signJson.data && signJson.data.token) ? signJson.data.token : null;
   if (!signToken) {
-    log('error', game, "Failed to get Sign Token");
+    log('error', game, "Failed to get Sign Token. Response: " + JSON.stringify(signJson));
     return;
   }
 
@@ -236,48 +239,48 @@ async function runEndfield(cookie, game) {
   } else if (code === 10002) {
     log('error', game, `Account Token is expired. Please update the script.`);
   } else {
-    log('error', game, `API Error: ${code} - ${msg}`);
+    log('error', game, `API Error: ${code} - ${msg} - Response: ` + JSON.stringify(response));
   }
 }
+
+
+const endfieldUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 async function getOAuthCode(token) {
   const payload = { token: token, appCode: APP_CODE, type: 0 };
   const response = await fetch("https://as.gryphline.com/user/oauth2/v2/grant", {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'user-agent': endfieldUserAgent },
     body: JSON.stringify(payload)
   });
-  const json = await response.json();
-  return (json.status === 0 && json.data && json.data.code) ? json.data.code : null;
+  return await response.json();
 }
 
 async function getCred(oauthCode) {
   const payload = { kind: 1, code: oauthCode };
   const response = await fetch("https://zonai.skport.com/web/v1/user/auth/generate_cred_by_code", {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'user-agent': endfieldUserAgent },
     body: JSON.stringify(payload)
   });
-  const json = await response.json();
-  return (json.code === 0 && json.data && json.data.cred) ? json.data.cred : null;
+  return await response.json();
 }
 
 async function getSignToken(cred) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en" };
+  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en", "user-agent": endfieldUserAgent };
   const response = await fetch("https://zonai.skport.com/web/v1/auth/refresh", {
     method: 'GET',
     headers: headers
   });
-  const json = await response.json();
-  return (json.code === 0 && json.data && json.data.token) ? json.data.token : null;
+  return await response.json();
 }
 
 async function getPlayerBinding(cred, signToken) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const path = "/api/v1/game/player/binding";
   const signature = computeSign(path, "", timestamp, signToken);
-  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en", "sign": signature };
+  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en", "sign": signature, "user-agent": endfieldUserAgent };
   const response = await fetch("https://zonai.skport.com" + path, {
     method: 'GET',
     headers: headers
@@ -303,7 +306,8 @@ async function sendAttendanceRequest(cred, signToken, gameRole) {
   const signature = computeSign(path, "", timestamp, signToken);
   const headers = {
       "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp,
-      "sk-language": "en", "sign": signature, "Content-Type": "application/json"
+      "sk-language": "en", "sign": signature, "content-type": "application/json",
+      "user-agent": endfieldUserAgent
   };
   if (gameRole) headers["sk-game-role"] = gameRole;
   const response = await fetch("https://zonai.skport.com" + path, {
