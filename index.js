@@ -6,6 +6,8 @@ const APP_CODE = "6eb76d4e13aa36e6";
 const PLATFORM = "3";
 const VNAME = "1.0.0";
 const ENDFIELD_GAME_ID = "3";
+const endfieldUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
 
 const cookies = process.env.COOKIE.split('\n').map(s => s.trim())
 const games = process.env.GAMES.split('\n').map(s => s.trim())
@@ -243,8 +245,6 @@ async function runEndfield(cookie, game) {
   }
 }
 
-
-const endfieldUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 async function getOAuthCode(token) {
   const payload = { token: token, appCode: APP_CODE, type: 0 };
