@@ -71,6 +71,8 @@ hoyolabのCookieとは別の `SKPORT_COOKIE` というシークレットに設�
 3. Applicationタブ -> Cookies -> `https://game.skport.com` (または `.skport.com`) を開きます。
 4. 一覧から `SK_OAUTH_CRED_KEY` を見つけ、その値(Value)をコピーします。この値が `endfield` 用の `SKPORT_COOKIE` になります。大切に保管し、絶対に他人と共有しないでください。
 
+複数アカウントで一部だけEndfieldを使う場合の行の並べ方は [複数アカウント](#複数アカウント) を参照してください。
+
 > [!NOTE]
 > SKPORT側の認証方式は今後も変更される可能性があります。うまく動作しない場合は、この手順を参考に最新の `SK_OAUTH_CRED_KEY` を取得し直してください。
 
@@ -133,7 +135,17 @@ hoyolabのCookieとは別の `SKPORT_COOKIE` というシークレットに設�
   <img src="https://github.com/user-attachments/assets/4a56f4e1-8fb4-4137-acc6-ac30cade78f1" />
 </details>
 
-`COOKIE`・`SKPORT_COOKIE`・`GAMES` はいずれも改行区切りで、同じ行番号のアカウントとして扱われます。あるアカウントがhoyolabのゲームを使わない場合は `COOKIE` の該当行を、Endfieldを使わない場合は `SKPORT_COOKIE` の該当行を空行にしておいてください。
+`COOKIE` と `GAMES` はいずれも改行区切りで、同じ行番号のアカウントとして扱われます。
+
+`SKPORT_COOKIE` だけは扱いが異なります。GitHub Secretsは値の先頭・末尾の空行を保存時に取り除いてしまうため、行を空けて番号を揃えることができません。そのため `SKPORT_COOKIE` には **`GAMES` に `endfield` を含むアカウントの分だけ、出現する順番に** 値を並べてください(hoyolabのみのアカウントの分は行を空ける必要はありません)。
+
+例えば `GAMES` が
+```
+gi hsr
+endfield
+zzz endfield
+```
+の場合、`SKPORT_COOKIE` は1行目・2行目のアカウントの `SK_OAUTH_CRED_KEY` を上から順に2行だけ書けばOKです(1アカウント目はhoyolabのみなので不要)。
 
 ## Discord Webhook
 
