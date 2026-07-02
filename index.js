@@ -25,16 +25,8 @@ const endpoints = {
 }
 
 let hasErrors = false
-let latestGames = []
 
 async function run(cookie, skportCookie, games) {
-  if (!games) {
-    games = latestGames
-  } else {
-    games = games.split(' ')
-    latestGames = games
-  }
-
   for (let game of games) {
     game = game.toLowerCase()
 
@@ -190,15 +182,30 @@ if (!games || !games.length) {
   throw new Error('GAMES environment variable not set!')
 }
 
-const needsSkportCookie = games.some(g => g.toLowerCase().split(' ').includes('endfield'))
+// a blank GAMES line reuses the previous account's games list
+let previousGames = []
+const resolvedGames = games.map(line => {
+  previousGames = line ? line.split(' ') : previousGames
+  return previousGames
+})
+
+const needsSkportCookie = resolvedGames.some(list => list.map(g => g.toLowerCase()).includes('endfield'))
 
 if (needsSkportCookie && !process.env.SKPORT_COOKIE) {
   throw new Error('SKPORT_COOKIE environment variable not set! (required for endfield)')
 }
 
+// SKPORT_COOKIE only needs one line per account that actually uses endfield,
+// in order, since GitHub Secrets strips leading/trailing blank lines and
+// breaks any scheme relying on placeholder blank lines to keep indices aligned
+let skportCookieCursor = 0
+
 for (const index in cookies) {
   log('info', `-- CHECKING IN FOR ACCOUNT ${Number(index) + 1} --`)
-  await run(cookies[index], skportCookies[index], games[index])
+  const accountGames = resolvedGames[index]
+  const usesSkport = accountGames.map(g => g.toLowerCase()).includes('endfield')
+  const skportCookie = usesSkport ? skportCookies[skportCookieCursor++] : undefined
+  await run(cookies[index], skportCookie, accountGames)
 }
 
 if (discordWebhook && URL.canParse(discordWebhook)) {
