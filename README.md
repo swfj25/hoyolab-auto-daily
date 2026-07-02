@@ -1,185 +1,193 @@
-# Hoyolab Auto Daily Check In
+# Hoyolab 自動デイリーチェックイン
 
-Today's check in status:
+本日のチェックイン状況:
 [![If you see this text, chances are the automation hasn't run. Do your setup below!](../../actions/workflows/login.yml/badge.svg)](../../actions/workflows/login.yml)
 
-Repository version:
+リポジトリのバージョン:
 [![Do your setup!](../../actions/workflows/version.yml/badge.svg)](../../actions/workflows/version.yml)
 
-## Table of Contents
+## 目次
 
-- [Getting your cookie](#getting-your-cookie)
-- [Usage](#usage)
-- [Multiple Accounts](#multiple-accounts)
+- [Cookieの取得方法](#cookieの取得方法)
+- [使い方](#使い方)
+- [複数アカウント](#複数アカウント)
 - [Discord Webhook](#discord-webhook)
-- [FAQ](#faq)
-  - [Is this safe?](#is-this-safe)
-  - [How to update my (fork) repository version?](#how-to-update-my-fork-repository-version)
-  - [Error not logged in](#error-not-logged-in)
-  - [I have other issues](#i-have-other-issues)
+- [よくある質問](#よくある質問)
+  - [これは安全ですか？](#これは安全ですか)
+  - [(フォークした)リポジトリのバージョンを更新するには？](#フォークしたリポジトリのバージョンを更新するには)
+  - [「ログインしていません」エラー](#ログインしていませんエラー)
+  - [その他の問題がある場合](#その他の問題がある場合)
 
-## Getting your cookie
+## Cookieの取得方法
 
-You have to check in manually first to get your cookie, follow these steps (click to open screenshot):
+Cookieを取得するには、まず手動でチェックインする必要があります。以下の手順に従ってください(クリックしてスクリーンショットを開く):
 
-1. Open [HoYoLAB](https://www.hoyolab.com/home) and login if you haven't (obviously)
+1. [HoYoLAB](https://www.hoyolab.com/home) を開き、まだの場合はログインします (当然ですが)
 
 2. <details>
-   <summary>Open dev tool (<kbd>Ctrl+Shift+I</kbd> or right click > Inspect)</summary>
+   <summary>開発者ツールを開く (<kbd>Ctrl+Shift+I</kbd> または右クリック > 検証)</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/81a57cfa-9f2e-48d7-bec6-5ef4edc3b857" />
    </details>
 
 3. <details>
-   <summary>For Chromium users, click on the Application tab. If not found, click on the arrow.</summary>
+   <summary>Chromium系ブラウザの場合、Applicationタブをクリックします。見つからない場合は矢印をクリックしてください。</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/ea4bb233-367c-4c41-8c66-30c2bc2f3150" />
    </details>
    <details>
-   <summary>For Firefox/Gecko-based browsers, click on the Storage tab.</summary>
+   <summary>Firefox/Gecko系ブラウザの場合、Storageタブをクリックします。</summary>
    <img src="https://github.com/user-attachments/assets/4e12c315-9a01-4ad8-9e5f-6197328e900f" />
    </details>
 
 4. <details>
-   <summary>On the filter box, type <code>v2</code>. You might want to expand the dev tools to see clearly.</summary>
+   <summary>フィルターボックスに <code>v2</code> と入力します。見やすくするために開発者ツールを広げてもよいでしょう。</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/bf1eec5f-bb1e-4af2-b37b-3c3c252328db" />
    </details>
 
 5. <details>
-   <summary>Find <code>ltoken_v2</code> and <code>ltuid_v2</code>, click on them, and copy the value below.</summary>
+   <summary><code>ltoken_v2</code> と <code>ltuid_v2</code> を見つけてクリックし、下の値をコピーします。</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/3ce70d90-6d5d-4353-ab35-8476c44124a1" />
    </details>
 
 6. <details open>
-   <summary>Write <code>ltuid_v2=PASTE_ltuid_v2; ltoken_v2=PASTE_ltoken_v2</code> like the screenshot.</summary>
+   <summary>スクリーンショットのように <code>ltuid_v2=PASTE_ltuid_v2; ltoken_v2=PASTE_ltoken_v2</code> の形式で書きます。</summary>
 
-   I write the line on the browser url to make it easier. Pay attention, use semicolon (;) and not colon (:)
+   分かりやすくするため、ブラウザのURLバー上でこの行を書いています。コロン(:)ではなくセミコロン(;)を使う点に注意してください。
 
-   It should look like this: `ltuid_v2=249806310; ltoken_v2=v2_CAISDG...`
+   以下のようになります: `ltuid_v2=249806310; ltoken_v2=v2_CAISDG...`
 
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/4309fcd9-3d6b-43f3-96f2-d8276bea6280" />
    </details>
 
-7. Copy that. That's your cookie, keep it safe and do NOT share it with anyone!
+7. それをコピーしてください。それがあなたのCookieです。大切に保管し、絶対に他人と共有しないでください！
 
-### Getting your cookie specifically for Endfield (SKPORT)
+### Endfield (SKPORT) 用のCookie取得方法
 
-If you are setting up auto check-in for Endfield, the cookie you need is your `ACCOUNT_TOKEN` from SKPORT:
+Endfieldの自動チェックインを設定する場合、必要なのは SKPORT の `SK_OAUTH_CRED_KEY` です。
 
-1. Open the [Endfield Sign-in Page](https://game.skport.com/endfield/sign-in) and log in.
-2. Open dev tools (<kbd>F12</kbd> or Inspect), and reload the page.
-3. Go to the Application tab -> Cookies -> `https://game.skport.com` (or `.skport.com`).
-4. Find `ACCOUNT_TOKEN` in the list and copy its Value. This value is your `COOKIE` for the `endfield` game entry. Keep it safe and do NOT share it.
+hoyolabのCookieとは別の `SKPORT_COOKIE` というシークレットに設定します。これにより、将来SKPORT側の仕様変更があっても、hoyolabの `COOKIE` を再設定し直す必要がなくなります。
 
-## Usage
+1. [Endfield サインインページ](https://game.skport.com/endfield/sign-in) を開き、ログインします。
+2. 開発者ツールを開き (<kbd>F12</kbd> または検証)、ページをリロードします。
+3. Applicationタブ -> Cookies -> `https://game.skport.com` (または `.skport.com`) を開きます。
+4. 一覧から `SK_OAUTH_CRED_KEY` を見つけ、その値(Value)をコピーします。この値が `endfield` 用の `SKPORT_COOKIE` になります。大切に保管し、絶対に他人と共有しないでください。
 
-1. [Fork this repo](../../fork)
-2. Open your fork repository
+> [!NOTE]
+> SKPORT側の認証方式は今後も変更される可能性があります。うまく動作しない場合は、この手順を参考に最新の `SK_OAUTH_CRED_KEY` を取得し直してください。
+
+## 使い方
+
+1. [このリポジトリをフォーク](../../fork)
+2. フォークしたリポジトリを開く
 3. <details>
-   <summary>Go to Settings > Secrets and variables > Actions</summary>
+   <summary>Settings > Secrets and variables > Actions を開く</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/134a2c25-0345-4a46-b84f-5fa928031e5a" />
    </details>
 
 4. <details>
-   <summary>Click on New repository secrets</summary>
+   <summary>New repository secrets をクリック</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/9d77c1d2-60e5-4dd0-a5d4-3b81c1bf0321" />
    </details>
 
 5. <details>
    <summary>
-      Insert name with <code>COOKIE</code> and secret with
-      <a href="#getting-your-cookie">your cookie</a>, then click Add secret
+      名前に <code>COOKIE</code>、値に <a href="#cookieの取得方法">取得したCookie</a> を入力し、Add secret をクリック
    </summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/9a450ba4-a155-4a0e-8a48-d730a3be5c73" />
    </details>
 
+5-1. Endfield (SKPORT) をチェックインする場合は、同様に `SKPORT_COOKIE` という名前のシークレットも作成し、[取得した `SK_OAUTH_CRED_KEY`](#endfield-skport-用のcookie取得方法) を値として設定してください。
+
 6. <details>
-   <summary>Now for the games, go to Variables and click New repository variable</summary>
+   <summary>次にゲームの設定です。Variables に移動し、New repository variable をクリック</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/5c6c226a-141c-41c2-82f5-8254b1741196" />
    </details>
 
 7. <details>
    <summary>
-      Insert name with <code>GAMES</code> and value with the game codes you want to check in, separated by space like the example screenshot.<br/>
-      Supported values are: <code>zzz</code>, <code>gi</code>, <code>hsr</code>, <code>hi3</code>, <code>tot</code>, <code>endfield</code>
+      名前に <code>GAMES</code>、値にチェックインしたいゲームコードをスペース区切りで入力します(スクリーンショット参照)。<br/>
+      対応しているのは <code>zzz</code>, <code>gi</code>, <code>hsr</code>, <code>hi3</code>, <code>tot</code>, <code>endfield</code> です。
    </summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/01cd1a4b-16ae-4f3c-ba3e-cd3f913e44fa" />
    </details>
 
 8. <details>
    <summary>
-      For the first day, you have to trigger this manually.
-      Simply go <a href="../../actions/workflows/login.yml">HERE</a> and click on Run workflow
+      初日は手動でトリガーする必要があります。
+      <a href="../../actions/workflows/login.yml">こちら</a>を開き、Run workflow をクリックしてください。
    </summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/ea1e48d2-a069-4db6-bdcd-86eecae8d81d" />
    </details>
 
 9. <details>
-   <summary>Refresh the page, wait for 15-25 secs, and see if it ran successfully. You should now see the check in status on top of README.</summary>
+   <summary>ページを更新し、15〜25秒ほど待って、正常に実行されたか確認します。README上部にチェックイン状況が表示されるはずです。</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/5c8520ee-a8b7-4c66-bb1b-ef945c499112" />
    </details>
 
-10. You're set! Hop on your game the next day and see if you got the rewards
+10. 設定完了です！翌日ゲームを起動して、報酬を受け取れているか確認しましょう
 
-## Multiple Accounts
+## 複数アカウント
 
 <details>
-  <summary>To add other accounts, you can add another cookie and games in a new line like below.</summary>
+  <summary>他のアカウントを追加するには、下記のようにCookieとGamesの新しい行を追加します。</summary>
   <img src="https://github.com/user-attachments/assets/99fd25cd-71f6-4aae-9949-11d055fadf73" />
   <img src="https://github.com/user-attachments/assets/4a56f4e1-8fb4-4137-acc6-ac30cade78f1" />
 </details>
 
+`COOKIE`・`SKPORT_COOKIE`・`GAMES` はいずれも改行区切りで、同じ行番号のアカウントとして扱われます。あるアカウントがhoyolabのゲームを使わない場合は `COOKIE` の該当行を、Endfieldを使わない場合は `SKPORT_COOKIE` の該当行を空行にしておいてください。
+
 ## Discord Webhook
 
-You may use Discord webhook to send notifications to your channel!
+Discord Webhookを使って、チャンネルに通知を送ることができます！
 
 1. <details>
-   <summary>Go to channel settings</summary>
+   <summary>チャンネル設定を開く</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/80f3b2f1-cc55-4316-9153-3fc5026b7da8" />
    </details>
 
 2. <details>
-   <summary>Go to Integrations and click Create Webhook</summary>
+   <summary>連携サービスを開き、ウェブフックを作成をクリック</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/b4d0c07d-35a5-4382-99de-584c70c4d730" />
    </details>
 
 3. <details>
-   <summary>You can edit the name and picture freely, then Copy Webhook URL</summary>
+   <summary>名前やアイコンは自由に編集し、ウェブフックURLをコピーします</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/3df5b59c-edc9-4884-897c-9159e243598e" />
    </details>
 
 4. <details>
-   <summary>Create a new repository <em>variable</em> named <code>DISCORD_WEBHOOK</code> with value of the webhook URL</summary>
+   <summary>新しいリポジトリ<em>変数</em>を作成し、名前を <code>DISCORD_WEBHOOK</code>、値をウェブフックURLにします</summary>
    <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/15b029ff-906d-472c-b356-ae9efed4477b" />
    </details>
 
 5. <details>
-   <summary>(Optional) If you want to be tagged on check in, add `DISCORD_USER` variable with your Discord ID.</summary>
+   <summary>(任意) チェックイン時にメンションされたい場合は、`DISCORD_USER` 変数にDiscord IDを追加してください。</summary>
    <img src="https://github.com/user-attachments/assets/995a4b18-4c22-4dcd-9a2e-90fac74079c1" />
    <img src="https://github.com/user-attachments/assets/52dff051-abb4-4cc0-b834-685d49a06731" />
    </details>
 
-6. You may trigger the check in manually and see if the messages got sent
+6. 手動でチェックインをトリガーして、メッセージが届くか確認してみましょう
 
-## FAQ
+## よくある質問
 
-### Is this safe?
+### これは安全ですか？
 
-There should be no issues, automated check-in exists for years and there hasn't been any reports about hoyo doing anything against it
+問題ないはずです。自動チェックインは何年も前から存在しており、Hoyoがこれに対して何らかの対応を行ったという報告はありません。
 
-### How to update my (fork) repository version?
+### (フォークした)リポジトリのバージョンを更新するには？
 
 <details>
-<summary>Go to your repository and click Sync fork</summary>
+<summary>自分のリポジトリを開き、Sync fork をクリック</summary>
 <img src="https://github.com/sglkc/hoyolab-auto-daily/assets/31957516/08c10262-8a97-433b-b499-143cc116184d" />
 </details>
 
-### Error not logged in
+### 「ログインしていません」エラー
 
-This is a common issue even if you seem to get the cookies right. Here's another method to get your cookies:
+Cookieを正しく取得できているように見えても、これはよくある問題です。以下の別の方法でCookieを取得してみてください:
 
 https://gist.github.com/torikushiii/59eff33fc8ea89dbc0b2e7652db9d3fd
 
-Just copy everything and paste to the COOKIE secret
+内容をすべてコピーして `COOKIE` シークレットに貼り付けてください。
 
-### I have other issues
+### その他の問題がある場合
 
-To the [Issues page](https://github.com/sglkc/hoyolab-auto-daily/issues)
+[Issuesページ](https://github.com/sglkc/hoyolab-auto-daily/issues) へどうぞ
