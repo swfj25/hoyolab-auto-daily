@@ -232,6 +232,13 @@ async function runEndfield(cookie, game) {
   }
 
   const gameRole = await getPlayerBinding(cred, signToken);
+  if (!gameRole) {
+    // getPlayerBinding already logged the specific reason it couldn't
+    // resolve a role. Sending attendance without sk-game-role only yields
+    // the confusing "19001 无法获取当前角色位置" error, so bail out here.
+    return;
+  }
+
   const response = await sendAttendanceRequest(cred, signToken, gameRole);
 
   const code = response.code;
@@ -262,9 +269,28 @@ function extractCred(cookie) {
   return raw || null;
 }
 
+// SKPORT rejects/mis-handles requests that lack the web origin/referer, which
+// makes the binding lookup silently fail. Always send them so the API can
+// resolve the account and its game role.
+function buildEndfieldHeaders(cred, timestamp, extra = {}) {
+  return {
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/json",
+    "origin": "https://game.skport.com",
+    "referer": "https://game.skport.com/",
+    "cred": cred,
+    "platform": PLATFORM,
+    "sk-language": "en",
+    "timestamp": timestamp,
+    "vname": VNAME,
+    "user-agent": endfieldUserAgent,
+    ...extra,
+  };
+}
+
 async function getSignToken(cred) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en", "user-agent": endfieldUserAgent };
+  const headers = buildEndfieldHeaders(cred, timestamp);
   const response = await fetch("https://zonai.skport.com/web/v1/auth/refresh", {
     method: 'GET',
     headers: headers
@@ -276,23 +302,38 @@ async function getPlayerBinding(cred, signToken) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const path = "/api/v1/game/player/binding";
   const signature = computeSign(path, "", timestamp, signToken);
-  const headers = { "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp, "sk-language": "en", "sign": signature, "user-agent": endfieldUserAgent };
+  const headers = buildEndfieldHeaders(cred, timestamp, { sign: signature });
   const response = await fetch("https://zonai.skport.com" + path, {
     method: 'GET',
     headers: headers
   });
   const json = await response.json();
 
-  if (json.code === 0 && json.data && json.data.list) {
-    const apps = json.data.list;
-    for (let i = 0; i < apps.length; i++) {
-        if (apps[i].appCode === "endfield" && apps[i].bindingList) {
-            const binding = apps[i].bindingList[0];
-            const role = binding.defaultRole || (binding.roles && binding.roles[0]);
-            if (role) return `${ENDFIELD_GAME_ID}_${role.roleId}_${role.serverId}`;
-        }
+  // Printed to the Actions log (debug is not stored in Discord messages) so
+  // the raw binding response is visible if role resolution ever fails again.
+  log('debug', 'endfield', 'Binding response:', json);
+
+  if (json.code !== 0 || !json.data || !json.data.list) {
+    log('error', 'endfield', `Failed to get player binding: ${json.code} - ${json.message || ''}`);
+    return null;
+  }
+
+  const endfieldApp = json.data.list.find(app => app.appCode === "endfield");
+  if (!endfieldApp || !endfieldApp.bindingList || !endfieldApp.bindingList.length) {
+    log('error', 'endfield', 'No Endfield account is bound to this SKPORT login.');
+    return null;
+  }
+
+  for (const binding of endfieldApp.bindingList) {
+    const roles = binding.roles || (binding.defaultRole ? [binding.defaultRole] : []);
+    for (const role of roles) {
+      if (role && role.roleId && role.serverId) {
+        return `${ENDFIELD_GAME_ID}_${role.roleId}_${role.serverId}`;
+      }
     }
   }
+
+  log('error', 'endfield', 'Endfield binding found but it has no playable role.');
   return null;
 }
 
@@ -300,12 +341,7 @@ async function sendAttendanceRequest(cred, signToken, gameRole) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const path = "/web/v1/game/endfield/attendance";
   const signature = computeSign(path, "", timestamp, signToken);
-  const headers = {
-      "cred": cred, "platform": PLATFORM, "vname": VNAME, "timestamp": timestamp,
-      "sk-language": "en", "sign": signature, "content-type": "application/json",
-      "user-agent": endfieldUserAgent
-  };
-  if (gameRole) headers["sk-game-role"] = gameRole;
+  const headers = buildEndfieldHeaders(cred, timestamp, { sign: signature, "sk-game-role": gameRole });
   const response = await fetch("https://zonai.skport.com" + path, {
       method: 'POST',
       headers: headers

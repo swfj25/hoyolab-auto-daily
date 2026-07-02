@@ -200,6 +200,15 @@ https://gist.github.com/torikushiii/59eff33fc8ea89dbc0b2e7652db9d3fd
 
 内容をすべてコピーして `COOKIE` シークレットに貼り付けてください。
 
+### Endfieldで「19001 无法获取当前角色位置」エラーが出る
+
+これはSKPORT側でキャラクター(役割)の情報が取得できていない場合に出るエラーです。まず以下を確認してください。
+
+- Endfieldを一度でも起動し、SKPORTアカウントとゲームアカウントが連携されているか(サインインページで自分のキャラクターが表示されるか)。
+- `SKPORT_COOKIE` の `SK_OAUTH_CRED_KEY` が最新か。古い/失効した値だと役割を取得できません。取得し直してみてください。
+
+それでも解決しない場合、Actionsの実行ログに `ENDFIELD: Binding response:` という行が出力されるので、その内容を添えて[Issuesページ](https://github.com/sglkc/hoyolab-auto-daily/issues)に報告してください。
+
 ### その他の問題がある場合
 
 [Issuesページ](https://github.com/sglkc/hoyolab-auto-daily/issues) へどうぞ
