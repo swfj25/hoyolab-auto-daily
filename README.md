@@ -62,12 +62,12 @@ You have to check in manually first to get your cookie, follow these steps (clic
 
 ### Getting your cookie specifically for Endfield (SKPORT)
 
-If you are setting up auto check-in for Endfield, the cookie you need is your `ACCOUNT_TOKEN` from SKPORT:
+If you are setting up auto check-in for Endfield, the cookie you need is your `SK_OAUTH_CRED_KEY` from SKPORT:
 
 1. Open the [Endfield Sign-in Page](https://game.skport.com/endfield/sign-in) and log in.
 2. Open dev tools (<kbd>F12</kbd> or Inspect), and reload the page.
 3. Go to the Application tab -> Cookies -> `https://game.skport.com` (or `.skport.com`).
-4. Find `ACCOUNT_TOKEN` in the list and copy its Value. This value is your `COOKIE` for the `endfield` game entry. Keep it safe and do NOT share it.
+4. Find `SK_OAUTH_CRED_KEY` in the list and copy its Value. This value is your `COOKIE` for the `endfield` game entry. Keep it safe and do NOT share it.
 
 ## Usage
 

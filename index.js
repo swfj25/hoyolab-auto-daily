@@ -2,7 +2,6 @@
 
 import crypto from 'node:crypto';
 
-const APP_CODE = "6eb76d4e13aa36e6";
 const PLATFORM = "3";
 const VNAME = "1.0.0";
 const ENDFIELD_GAME_ID = "3";
@@ -205,24 +204,16 @@ if (hasErrors) {
 }
 
 async function runEndfield(cookie, game) {
-  const oauthJson = await getOAuthCode(cookie);
-  const oauthCode = (oauthJson.status === 0 && oauthJson.data && oauthJson.data.code) ? oauthJson.data.code : null;
-  if (!oauthCode) {
-    log('error', game, "Failed to get OAuth Code (Check ACCOUNT_TOKEN). Response: " + JSON.stringify(oauthJson));
-    return;
-  }
-
-  const credJson = await getCred(oauthCode);
-  const cred = (credJson.code === 0 && credJson.data && credJson.data.cred) ? credJson.data.cred : null;
+  const cred = extractCred(cookie);
   if (!cred) {
-    log('error', game, "Failed to get Credential. Response: " + JSON.stringify(credJson));
+    log('error', game, "Failed to find SK_OAUTH_CRED_KEY in COOKIE. Please update your cookie, see README.");
     return;
   }
 
   const signJson = await getSignToken(cred);
   const signToken = (signJson.code === 0 && signJson.data && signJson.data.token) ? signJson.data.token : null;
   if (!signToken) {
-    log('error', game, "Failed to get Sign Token. Response: " + JSON.stringify(signJson));
+    log('error', game, "Failed to get Sign Token (Check SK_OAUTH_CRED_KEY). Response: " + JSON.stringify(signJson));
     return;
   }
 
@@ -239,35 +230,22 @@ async function runEndfield(cookie, game) {
   } else if (code === 1001 || code === 10001 || msg.toLowerCase().includes("already")) {
     log('info', game, `Already checked in for today`);
   } else if (code === 10002) {
-    log('error', game, `Account Token is expired. Please update the script.`);
+    log('error', game, `SK_OAUTH_CRED_KEY is expired. Please update your cookie.`);
   } else {
     log('error', game, `API Error: ${code} - ${msg} - Response: ` + JSON.stringify(response));
   }
 }
 
+// COOKIE for endfield may be a full cookie header string (copied from dev tools)
+// or just the raw SK_OAUTH_CRED_KEY value itself
+function extractCred(cookie) {
+  const match = cookie.match(/SK_OAUTH_CRED_KEY=([^;]+)/);
+  let raw = (match ? match[1] : cookie).trim();
 
-async function getOAuthCode(token) {
-  // Developer Tools may copy the token in URL-encoded format, so we decode it to base64
-  let decodedToken = token;
-  try { decodedToken = decodeURIComponent(token); } catch (e) {}
-  
-  const payload = { token: decodedToken, appCode: APP_CODE, type: 0 };
-  const response = await fetch("https://as.gryphline.com/user/oauth2/v2/grant", {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'user-agent': endfieldUserAgent },
-    body: JSON.stringify(payload)
-  });
-  return await response.json();
-}
+  // Developer Tools may copy the value in URL-encoded format
+  try { raw = decodeURIComponent(raw); } catch (e) {}
 
-async function getCred(oauthCode) {
-  const payload = { kind: 1, code: oauthCode };
-  const response = await fetch("https://zonai.skport.com/web/v1/user/auth/generate_cred_by_code", {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'user-agent': endfieldUserAgent },
-    body: JSON.stringify(payload)
-  });
-  return await response.json();
+  return raw || null;
 }
 
 async function getSignToken(cred) {
