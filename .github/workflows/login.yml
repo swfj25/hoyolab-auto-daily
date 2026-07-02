@@ -21,6 +21,7 @@ jobs:
         run: node index.js
         env:
           COOKIE: ${{ secrets.COOKIE }}
+          SKPORT_COOKIE: ${{ secrets.SKPORT_COOKIE }}
           GAMES: ${{ vars.GAMES }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DISCORD_USER: ${{ secrets.DISCORD_USER }}

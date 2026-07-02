@@ -9,6 +9,7 @@ const endfieldUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
 
 
 const cookies = process.env.COOKIE.split('\n').map(s => s.trim())
+const skportCookies = (process.env.SKPORT_COOKIE || '').split('\n').map(s => s.trim())
 const games = process.env.GAMES.split('\n').map(s => s.trim())
 const discordWebhook = process.env.DISCORD_WEBHOOK
 const discordUser = process.env.DISCORD_USER
@@ -26,7 +27,7 @@ const endpoints = {
 let hasErrors = false
 let latestGames = []
 
-async function run(cookie, games) {
+async function run(cookie, skportCookie, games) {
   if (!games) {
     games = latestGames
   } else {
@@ -45,7 +46,7 @@ async function run(cookie, games) {
     }
 
     if (game === 'endfield') {
-      await runEndfield(cookie, game)
+      await runEndfield(skportCookie, game)
       continue
     }
 
@@ -189,9 +190,15 @@ if (!games || !games.length) {
   throw new Error('GAMES environment variable not set!')
 }
 
+const needsSkportCookie = games.some(g => g.toLowerCase().split(' ').includes('endfield'))
+
+if (needsSkportCookie && !process.env.SKPORT_COOKIE) {
+  throw new Error('SKPORT_COOKIE environment variable not set! (required for endfield)')
+}
+
 for (const index in cookies) {
   log('info', `-- CHECKING IN FOR ACCOUNT ${Number(index) + 1} --`)
-  await run(cookies[index], games[index])
+  await run(cookies[index], skportCookies[index], games[index])
 }
 
 if (discordWebhook && URL.canParse(discordWebhook)) {
@@ -204,9 +211,9 @@ if (hasErrors) {
 }
 
 async function runEndfield(cookie, game) {
-  const cred = extractCred(cookie);
+  const cred = extractCred(cookie || '');
   if (!cred) {
-    log('error', game, "Failed to find SK_OAUTH_CRED_KEY in COOKIE. Please update your cookie, see README.");
+    log('error', game, "Failed to find SK_OAUTH_CRED_KEY in SKPORT_COOKIE. Please update your cookie, see README.");
     return;
   }
 
@@ -236,7 +243,7 @@ async function runEndfield(cookie, game) {
   }
 }
 
-// COOKIE for endfield may be a full cookie header string (copied from dev tools)
+// SKPORT_COOKIE may be a full cookie header string (copied from dev tools)
 // or just the raw SK_OAUTH_CRED_KEY value itself
 function extractCred(cookie) {
   const match = cookie.match(/SK_OAUTH_CRED_KEY=([^;]+)/);
