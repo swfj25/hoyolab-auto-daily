@@ -209,6 +209,12 @@ https://gist.github.com/torikushiii/59eff33fc8ea89dbc0b2e7652db9d3fd
 
 それでも解決しない場合、Actionsの実行ログに `ENDFIELD: Binding response:` という行が出力されるので、その内容を添えて[Issuesページ](https://github.com/sglkc/hoyolab-auto-daily/issues)に報告してください。
 
+### Endfieldで「SKPORT login is no longer valid (10001 - No valid user information found)」エラーが出る
+
+`SKPORT_COOKIE` に設定した `SK_OAUTH_CRED_KEY` のログインがSKPORT側で無効になっています。ブラウザで再ログイン・ログアウトしたり、別の端末でログインしたりすると、以前の値は使えなくなります。[Endfield (SKPORT) 用のCookie取得方法](#endfield-skport-用のcookie取得方法) の手順で `SK_OAUTH_CRED_KEY` を取得し直し、`SKPORT_COOKIE` を更新してください。
+
+なお、SKPORTへの接続タイムアウトなど一時的な通信エラーは自動で数回再試行します。それでも失敗した場合は `Request failed: ...` と記録され、他のゲームのチェックインとDiscord通知はそのまま続行されます。
+
 ### その他の問題がある場合
 
 [Issuesページ](https://github.com/sglkc/hoyolab-auto-daily/issues) へどうぞ
