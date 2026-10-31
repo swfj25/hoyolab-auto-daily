@@ -6,6 +6,8 @@ const PLATFORM = "3";
 const VNAME = "1.0.0";
 const ENDFIELD_GAME_ID = "3";
 const endfieldUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+const FETCH_MAX_ATTEMPTS = 3;
+const FETCH_RETRY_BASE_DELAY_MS = 2000;
 
 
 const cookies = process.env.COOKIE.split('\n').map(s => s.trim())
@@ -37,78 +39,110 @@ async function run(cookie, skportCookie, games) {
       continue
     }
 
-    if (game === 'endfield') {
-      await runEndfield(skportCookie, game)
-      continue
+    // one game failing (e.g. its server being unreachable) must not stop the
+    // remaining games or the Discord report, so record it as an error instead
+    try {
+      if (game === 'endfield') {
+        await runEndfield(skportCookie, game)
+      } else {
+        await runHoyolab(cookie, game)
+      }
+    } catch (err) {
+      log('error', game, `Request failed: ${describeError(err)}`)
     }
-
-    // begin check in
-    const endpoint = endpoints[game]
-    const url = new URL(endpoint)
-    const actId = url.searchParams.get('act_id')
-
-    url.searchParams.set('lang', 'ja-jp')
-
-    const body = JSON.stringify({
-      lang: 'ja-jp',
-      act_id: actId
-    })
-
-    // headers from valid browser request
-    const headers = new Headers()
-
-    headers.set('accept', 'application/json, text/plain, */*')
-    headers.set('accept-encoding', 'gzip, deflate, br, zstd')
-    headers.set('accept-language', 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7')
-    headers.set('connection', 'keep-alive')
-
-    headers.set('origin', 'https://act.hoyolab.com')
-    headers.set('referrer', 'https://act.hoyolab.com')
-    headers.set('content-type', 'application.json;charset=UTF-8')
-    headers.set('cookie', cookie)
-
-    headers.set('sec-ch-ua', '"Not/A)Brand";v="8", "Chromium";v="126", "Brave";v="126"')
-    headers.set('sec-ch-ua-mobile', '?0')
-    headers.set('sec-ch-ua-platform', '"Linux"')
-    headers.set('sec-fetch-dest', 'empty')
-    headers.set('sec-fech-mode', 'cors')
-    headers.set('sec-fetch-site', 'same-site')
-    headers.set('sec-gpc', '1')
-
-    headers.set("x-rpc-signgame", game)
-
-    headers.set('user-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36')
-
-    const res = await fetch(url, { method: 'POST', headers, body })
-    const json = await res.json()
-    const code = String(json.retcode)
-    const successCodes = {
-      '0': 'Successfully checked in!',
-      '-5003': 'Already checked in for today',
-    }
-
-    // success responses
-    if (code in successCodes) {
-      log('info', game, `${successCodes[code]}`)
-      continue
-    }
-
-    // error responses
-    const errorCodes = {
-      '-100': 'Error not logged in. Your cookie is invalid, try setting up again',
-      '-10002': 'Error not found. You haven\'t played this game'
-    }
-
-    log('debug', game, `Headers`, Object.fromEntries(res.headers))
-    log('debug', game, `Response`, json)
-
-    if (code in errorCodes) {
-      log('error', game, `${errorCodes[code]}`)
-      continue
-    }
-
-    log('error', game, `Error undocumented, report to Issues page if this persists`)
   }
+}
+
+async function runHoyolab(cookie, game) {
+  // begin check in
+  const endpoint = endpoints[game]
+  const url = new URL(endpoint)
+  const actId = url.searchParams.get('act_id')
+
+  url.searchParams.set('lang', 'ja-jp')
+
+  const body = JSON.stringify({
+    lang: 'ja-jp',
+    act_id: actId
+  })
+
+  // headers from valid browser request
+  const headers = new Headers()
+
+  headers.set('accept', 'application/json, text/plain, */*')
+  headers.set('accept-encoding', 'gzip, deflate, br, zstd')
+  headers.set('accept-language', 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7')
+  headers.set('connection', 'keep-alive')
+
+  headers.set('origin', 'https://act.hoyolab.com')
+  headers.set('referrer', 'https://act.hoyolab.com')
+  headers.set('content-type', 'application.json;charset=UTF-8')
+  headers.set('cookie', cookie)
+
+  headers.set('sec-ch-ua', '"Not/A)Brand";v="8", "Chromium";v="126", "Brave";v="126"')
+  headers.set('sec-ch-ua-mobile', '?0')
+  headers.set('sec-ch-ua-platform', '"Linux"')
+  headers.set('sec-fetch-dest', 'empty')
+  headers.set('sec-fech-mode', 'cors')
+  headers.set('sec-fetch-site', 'same-site')
+  headers.set('sec-gpc', '1')
+
+  headers.set("x-rpc-signgame", game)
+
+  headers.set('user-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36')
+
+  const res = await fetchWithRetry(url, { method: 'POST', headers, body })
+  const json = await res.json()
+  const code = String(json.retcode)
+  const successCodes = {
+    '0': 'Successfully checked in!',
+    '-5003': 'Already checked in for today',
+  }
+
+  // success responses
+  if (code in successCodes) {
+    log('info', game, `${successCodes[code]}`)
+    return
+  }
+
+  // error responses
+  const errorCodes = {
+    '-100': 'Error not logged in. Your cookie is invalid, try setting up again',
+    '-10002': 'Error not found. You haven\'t played this game'
+  }
+
+  log('debug', game, `Headers`, Object.fromEntries(res.headers))
+  log('debug', game, `Response`, json)
+
+  if (code in errorCodes) {
+    log('error', game, `${errorCodes[code]}`)
+    return
+  }
+
+  log('error', game, `Error undocumented, report to Issues page if this persists`)
+}
+
+// connect timeouts and 5xx responses are usually transient, so retry with
+// exponential backoff before giving up
+async function fetchWithRetry(url, options) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, options)
+      if (res.status < 500 || attempt >= FETCH_MAX_ATTEMPTS) return res
+      log('debug', `HTTP ${res.status} from ${new URL(url).host}, retrying (${attempt}/${FETCH_MAX_ATTEMPTS})`)
+    } catch (err) {
+      if (attempt >= FETCH_MAX_ATTEMPTS) throw err
+      log('debug', `Request to ${new URL(url).host} failed: ${describeError(err)}, retrying (${attempt}/${FETCH_MAX_ATTEMPTS})`)
+    }
+    await new Promise(resolve => setTimeout(resolve, FETCH_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1)))
+  }
+}
+
+// fetch hides the actual network error (e.g. UND_ERR_CONNECT_TIMEOUT) in cause
+function describeError(err) {
+  const cause = err && err.cause
+  if (!cause) return String(err && err.message || err)
+  return `${err.message} (${cause.code || cause.message || cause})`
 }
 
 // custom log function to store messages
@@ -225,6 +259,10 @@ async function runEndfield(cookie, game) {
   }
 
   const signJson = await getSignToken(cred);
+  if (isInvalidUserInfo(signJson)) {
+    logInvalidCred(game, signJson);
+    return;
+  }
   const signToken = (signJson.code === 0 && signJson.data && signJson.data.token) ? signJson.data.token : null;
   if (!signToken) {
     log('error', game, "Failed to get Sign Token (Check SK_OAUTH_CRED_KEY). Response: " + JSON.stringify(signJson));
@@ -248,6 +286,10 @@ async function runEndfield(cookie, game) {
     const rewards = parseRewards(response.data);
     const dayCount = response.data.signInCount || "?";
     log('info', game, `Successfully checked in! Days Signed: ${dayCount}, Rewards: ${rewards}`);
+  } else if (isInvalidUserInfo(response)) {
+    // must be checked before the 10001 "already" fallback below, otherwise an
+    // invalidated login would be reported as a successful check-in
+    logInvalidCred(game, response);
   } else if (code === 1001 || code === 10001 || msg.toLowerCase().includes("already")) {
     log('info', game, `Already checked in for today`);
   } else if (code === 10002) {
@@ -267,6 +309,17 @@ function extractCred(cookie) {
   try { raw = decodeURIComponent(raw); } catch (e) {}
 
   return raw || null;
+}
+
+// SKPORT answers 10001 "No valid user information found" once the login behind
+// SK_OAUTH_CRED_KEY is invalidated (e.g. by logging in again elsewhere), even
+// though /auth/refresh may still hand out a sign token for it
+function isInvalidUserInfo(json) {
+  return !!json && json.code === 10001 && /no valid user information/i.test(json.message || '');
+}
+
+function logInvalidCred(game, json) {
+  log('error', game, `SKPORT login is no longer valid (${json.code} - ${json.message}). Please get a new SK_OAUTH_CRED_KEY and update SKPORT_COOKIE, see README.`);
 }
 
 // SKPORT rejects/mis-handles requests that lack the web origin/referer, which
@@ -291,7 +344,7 @@ function buildEndfieldHeaders(cred, timestamp, extra = {}) {
 async function getSignToken(cred) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const headers = buildEndfieldHeaders(cred, timestamp);
-  const response = await fetch("https://zonai.skport.com/web/v1/auth/refresh", {
+  const response = await fetchWithRetry("https://zonai.skport.com/web/v1/auth/refresh", {
     method: 'GET',
     headers: headers
   });
@@ -303,7 +356,7 @@ async function getPlayerBinding(cred, signToken) {
   const path = "/api/v1/game/player/binding";
   const signature = computeSign(path, "", timestamp, signToken);
   const headers = buildEndfieldHeaders(cred, timestamp, { sign: signature });
-  const response = await fetch("https://zonai.skport.com" + path, {
+  const response = await fetchWithRetry("https://zonai.skport.com" + path, {
     method: 'GET',
     headers: headers
   });
@@ -312,6 +365,11 @@ async function getPlayerBinding(cred, signToken) {
   // Printed to the Actions log (debug is not stored in Discord messages) so
   // the raw binding response is visible if role resolution ever fails again.
   log('debug', 'endfield', 'Binding response:', json);
+
+  if (isInvalidUserInfo(json)) {
+    logInvalidCred('endfield', json);
+    return null;
+  }
 
   if (json.code !== 0 || !json.data || !json.data.list) {
     log('error', 'endfield', `Failed to get player binding: ${json.code} - ${json.message || ''}`);
@@ -342,7 +400,7 @@ async function sendAttendanceRequest(cred, signToken, gameRole) {
   const path = "/web/v1/game/endfield/attendance";
   const signature = computeSign(path, "", timestamp, signToken);
   const headers = buildEndfieldHeaders(cred, timestamp, { sign: signature, "sk-game-role": gameRole });
-  const response = await fetch("https://zonai.skport.com" + path, {
+  const response = await fetchWithRetry("https://zonai.skport.com" + path, {
       method: 'POST',
       headers: headers
   });
